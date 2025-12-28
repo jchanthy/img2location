@@ -1,0 +1,5 @@
+{
+  "name": "Photo Metadata Map",
+  "description": "An application to upload photos, read their EXIF metadata, and display their location on an interactive map.",
+  "requestFramePermissions": []
+}

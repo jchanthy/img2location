@@ -1,0 +1,119 @@
+<div class="h-screen w-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm z-10">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-blue-600 !text-3xl">photo_camera</span>
+      <h1 class="text-xl font-semibold text-gray-800">Photo Metadata Map</h1>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Left Panel -->
+    <aside class="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col">
+      <!-- Uploader -->
+      <div class="p-4 border-b border-gray-200">
+        <label class="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors">
+          <span class="material-symbols-outlined mr-2">upload_file</span>
+          Upload Photos
+          <input type="file" class="hidden" multiple accept="image/jpeg,image/heic,image/heif,image/jpg" (change)="onFileSelected($event)">
+        </label>
+      </div>
+
+      <!-- Photo List & Details -->
+      <div class="flex-1 overflow-y-auto">
+        @if (photos().length === 0) {
+          <div class="text-center p-8 text-gray-500">
+            <p>Upload photos to see them on the map.</p>
+          </div>
+        } @else {
+          <!-- Photo List -->
+          <div class="border-b border-gray-200 p-2">
+            <h2 class="px-2 text-sm font-semibold text-gray-600">Photos ({{ photos().length }})</h2>
+            <div class="mt-2 space-y-1">
+              @for (photo of photos(); track photo.id) {
+                <div 
+                  class="flex items-center gap-3 p-2 rounded-md cursor-pointer"
+                  [class.bg-blue-100]="activePhotoId() === photo.id"
+                  [class.hover:bg-gray-100]="activePhotoId() !== photo.id"
+                  (click)="setActivePhoto(photo.id)">
+                  <img [src]="photo.safeThumbnailUrl" [alt]="photo.file.name" class="w-12 h-12 object-cover rounded-md bg-gray-200 shrink-0">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate">{{ photo.file.name }}</p>
+                    @if(photo.state === 'loading') {
+                      <p class="text-xs text-gray-500 animate-pulse">Processing...</p>
+                    } @else if (photo.state === 'error') {
+                      <p class="text-xs text-red-500 truncate">{{ photo.error }}</p>
+                    } @else {
+                      <p class="text-xs text-gray-500 truncate">{{ photo.exif?.dateTaken?.toLocaleDateString() ?? 'No date' }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        
+        <!-- Details View -->
+        @if(activePhoto(); as photo) {
+          <div class="p-4">
+            <div class="mb-4 rounded-lg overflow-hidden aspect-video bg-gray-100 border">
+              <img [src]="photo.safeThumbnailUrl" [alt]="photo.file.name" class="w-full h-full object-contain">
+            </div>
+            
+            <!-- Camera Info -->
+            <div class="mb-4">
+                <h4 class="font-semibold text-gray-600 text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined !text-base">photo_camera</span>
+                    Camera Information
+                </h4>
+                <div class="space-y-2 text-sm bg-gray-50 p-3 rounded-md border">
+                    <div class="grid grid-cols-2 gap-2">
+                        <span class="text-gray-500">Make:</span>
+                        <span class="font-medium text-gray-900 truncate">{{ photo.exif?.make ?? 'N/A' }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <span class="text-gray-500">Model:</span>
+                        <span class="font-medium text-gray-900 truncate">{{ photo.exif?.model ?? 'N/A' }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <span class="text-gray-500">Date Taken:</span>
+                        <span class="font-medium text-gray-900">{{ photo.exif?.dateTaken?.toLocaleString() ?? 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Info -->
+            <div>
+                <h4 class="font-semibold text-gray-600 text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined !text-base">location_on</span>
+                    Location Information
+                </h4>
+                <div class="space-y-2 text-sm bg-gray-50 p-3 rounded-md border">
+                    @if(photo.gps) {
+                      <div class="grid grid-cols-2 gap-2">
+                          <span class="text-gray-500">Latitude:</span>
+                          <span class="font-medium text-gray-900 truncate">{{ photo.gps.lat.toFixed(6) }}</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                          <span class="text-gray-500">Longitude:</span>
+                          <span class="font-medium text-gray-900 truncate">{{ photo.gps.lng.toFixed(6) }}</span>
+                      </div>
+                    } @else {
+                      <div class="grid grid-cols-2 gap-2">
+                          <span class="text-gray-500">Coordinates:</span>
+                          <span class="font-medium text-gray-900">Not available</span>
+                      </div>
+                    }
+                </div>
+            </div>
+          </div>
+        }
+      </div>
+    </aside>
+
+    <!-- Right Panel (Map) -->
+    <main class="flex-1 bg-gray-200">
+      <app-map [photos]="photos()" [activePhotoId]="activePhotoId()" (markerClicked)="setActivePhoto($event)"></app-map>
+    </main>
+  </div>
+</div>
