@@ -77,4 +77,31 @@ export class AppComponent {
   setActivePhoto(photoId: string | null): void {
     this.activePhotoId.set(photoId);
   }
+
+  deletePhoto(photoId: string): void {
+    const currentPhotos = this.photos();
+    const photoIndex = currentPhotos.findIndex(p => p.id === photoId);
+
+    if (photoIndex === -1) {
+        return; // Photo not found
+    }
+
+    // Revoke object URL to prevent memory leaks
+    const photoToDelete = currentPhotos[photoIndex];
+    URL.revokeObjectURL(photoToDelete.thumbnailUrl);
+
+    const newPhotos = currentPhotos.filter(p => p.id !== photoId);
+    this.photos.set(newPhotos);
+
+    // If the deleted photo was the active one, select a new one
+    if (this.activePhotoId() === photoId) {
+        if (newPhotos.length === 0) {
+            this.activePhotoId.set(null);
+        } else {
+            // Select the next photo, or the previous one if the last was deleted
+            const newIndex = Math.min(photoIndex, newPhotos.length - 1);
+            this.activePhotoId.set(newPhotos[newIndex].id);
+        }
+    }
+  }
 }

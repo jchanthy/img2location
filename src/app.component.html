@@ -32,7 +32,7 @@
             <div class="mt-2 space-y-1">
               @for (photo of photos(); track photo.id) {
                 <div 
-                  class="flex items-center gap-3 p-2 rounded-md cursor-pointer"
+                  class="flex items-center gap-3 p-2 rounded-md cursor-pointer group"
                   [class.bg-blue-100]="activePhotoId() === photo.id"
                   [class.hover:bg-gray-100]="activePhotoId() !== photo.id"
                   (click)="setActivePhoto(photo.id)">
@@ -47,6 +47,9 @@
                       <p class="text-xs text-gray-500 truncate">{{ photo.exif?.dateTaken?.toLocaleDateString() ?? 'No date' }}</p>
                     }
                   </div>
+                  <button (click)="$event.stopPropagation(); deletePhoto(photo.id)" class="ml-auto text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full">
+                      <span class="material-symbols-outlined !text-lg">delete</span>
+                  </button>
                 </div>
               }
             </div>
@@ -109,6 +112,14 @@
                       </div>
                     }
                 </div>
+            </div>
+
+            <!-- Delete Button -->
+            <div class="mt-6">
+                <button (click)="deletePhoto(photo.id)" class="w-full flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition-colors">
+                    <span class="material-symbols-outlined !text-base mr-1.5">delete</span>
+                    Delete Photo
+                </button>
             </div>
           </div>
         }
