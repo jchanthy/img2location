@@ -3,6 +3,7 @@ import { SafeUrl } from '@angular/platform-browser';
 export interface PhotoData {
   id: string;
   file: File;
+  displayBlob: Blob; // The blob used for display (could be original or converted JPEG)
   thumbnailUrl: string;
   safeThumbnailUrl: SafeUrl;
   state: 'loading' | 'processed' | 'error';
@@ -16,4 +17,9 @@ export interface PhotoData {
     dateTaken?: Date;
   } | null;
   error: string | null;
+
+  // AI-related properties
+  aiState: 'idle' | 'loading' | 'success' | 'error';
+  aiLocationName: string | null;
+  isAiLocation: boolean;
 }
