@@ -17,9 +17,4 @@ export interface PhotoData {
     dateTaken?: Date;
   } | null;
   error: string | null;
-
-  // AI-related properties
-  aiState: 'idle' | 'loading' | 'success' | 'error';
-  aiLocationName: string | null;
-  isAiLocation: boolean;
 }

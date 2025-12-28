@@ -4,7 +4,6 @@ import { PhotoData } from './models/photo-data.model';
 import { ImageProcessorService } from './services/image-processor.service';
 import { MapComponent } from './components/map/map.component';
 import heic2any from 'heic2any';
-import { GeminiService } from './services/gemini.service';
 
 @Component({
   selector: 'app-root',
@@ -16,7 +15,6 @@ import { GeminiService } from './services/gemini.service';
 export class AppComponent {
   private sanitizer = inject(DomSanitizer);
   private imageProcessor = inject(ImageProcessorService);
-  private geminiService = inject(GeminiService);
 
   photos = signal<PhotoData[]>([]);
   activePhotoId = signal<string | null>(null);
@@ -63,9 +61,6 @@ export class AppComponent {
         gps: null,
         exif: null,
         error: null,
-        aiState: 'idle',
-        aiLocationName: null,
-        isAiLocation: false
       };
       this.photos.update(p => [...p, preliminaryPhoto]);
       this.setActivePhoto(id);
@@ -81,39 +76,5 @@ export class AppComponent {
 
   setActivePhoto(photoId: string | null): void {
     this.activePhotoId.set(photoId);
-  }
-
-  async findLocationWithAi(photoId: string): Promise<void> {
-    this.photos.update(photos => photos.map(p => 
-      p.id === photoId ? { ...p, aiState: 'loading' } : p
-    ));
-
-    const photo = this.photos().find(p => p.id === photoId);
-    if (!photo) return;
-    
-    try {
-      const base64Image = await this.geminiService.blobToBase64(photo.displayBlob);
-      const location = await this.geminiService.getLocationFromImage(base64Image);
-
-      if (location && location.lat && location.lng) {
-         this.photos.update(photos => photos.map(p => 
-          p.id === photoId 
-            ? { ...p, 
-                aiState: 'success', 
-                gps: { lat: location.lat, lng: location.lng },
-                aiLocationName: location.name,
-                isAiLocation: true
-              } 
-            : p
-        ));
-      } else {
-        throw new Error('AI could not determine a valid location.');
-      }
-    } catch (error) {
-      console.error('AI location finding failed:', error);
-      this.photos.update(photos => photos.map(p => 
-        p.id === photoId ? { ...p, aiState: 'error' } : p
-      ));
-    }
   }
 }
