@@ -3,6 +3,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { PhotoData } from './models/photo-data.model';
 import { ImageProcessorService } from './services/image-processor.service';
 import { MapComponent } from './components/map/map.component';
+import heic2any from 'heic2any';
 
 @Component({
   selector: 'app-root',
@@ -30,7 +31,34 @@ export class AppComponent {
 
     for (const file of Array.from(input.files)) {
       const id = `${file.name}-${new Date().getTime()}`;
-      const thumbnailUrl = URL.createObjectURL(file);
+      
+      let thumbnailUrl = '';
+      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.heic$|\.heif$/i.test(file.name);
+
+      if (isHeic) {
+        try {
+          const conversionResult = await heic2any({ blob: file, toType: 'image/jpeg' });
+          const convertedBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+          thumbnailUrl = URL.createObjectURL(convertedBlob as Blob);
+        } catch (e) {
+          console.error('HEIC conversion failed', e);
+          const errorPhoto: PhotoData = {
+            id,
+            file,
+            thumbnailUrl: '',
+            safeThumbnailUrl: '',
+            state: 'error',
+            error: 'HEIC conversion failed.',
+            gps: null,
+            exif: null,
+          };
+          this.photos.update(p => [...p, errorPhoto]);
+          this.setActivePhoto(id);
+          continue;
+        }
+      } else {
+        thumbnailUrl = URL.createObjectURL(file);
+      }
 
       // Add a placeholder immediately
       const preliminaryPhoto: PhotoData = {
@@ -46,7 +74,7 @@ export class AppComponent {
       this.photos.update(p => [...p, preliminaryPhoto]);
       this.setActivePhoto(id);
 
-      // Process the image in the background
+      // Process the original image file in the background for metadata
       const processedData = await this.imageProcessor.processImage(file);
 
       // Update the photo with the processed data
